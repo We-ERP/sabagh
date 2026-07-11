@@ -2,125 +2,60 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منظومة إدارة الانتخابات - لوحة التحكم</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <title>منظومة إدارة الانتخابات</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <!-- إضافة مكتبة الرسوم البيانية -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        body { background: url('https://i.ibb.co/LzwwxDN8/img-1753488662296.jpg') no-repeat center center fixed; background-size: cover; font-family: 'Tajawal', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15); }
-        .tab-content { display: block; } .hidden { display: none; }
-        .nav-btn { cursor: pointer; transition: all 0.3s; }
-        /* استكمال التنسيقات القديمة كما هي */
-    </style>
 </head>
-<body class="text-gray-800 h-screen overflow-hidden flex flex-col">
-
-    <div id="app-loader" class="fixed inset-0 bg-[#004aad] z-[9999] flex flex-col justify-center items-center text-white">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-white mb-4"></div>
+<body class="bg-gray-100">
+    <div id="app-loader" class="fixed inset-0 bg-[#004aad] flex flex-col justify-center items-center text-white z-[9999]">
+        <div class="animate-spin h-12 w-12 border-t-2 border-white rounded-full mb-4"></div>
         <h2>جاري التهيئة...</h2>
     </div>
 
-    <!-- نافذة الدخول -->
-    <div id="loginModal" class="fixed inset-0 bg-black/60 flex justify-center items-center z-[2000]">
-        <div class="glass-panel p-8 rounded-2xl w-96 text-center">
-            <h3 class="text-2xl font-bold mb-4">تسجيل الدخول</h3>
-            <input type="text" id="username" class="w-full p-3 mb-3 border rounded-lg" placeholder="اسم المستخدم">
-            <input type="password" id="password" class="w-full p-3 mb-4 border rounded-lg" placeholder="كلمة المرور">
-            <button onclick="login()" class="w-full bg-blue-700 text-white p-3 rounded-lg font-bold">دخول</button>
+    <!-- المحتوى -->
+    <div id="mainContent" class="hidden">
+        <!-- أزرار الأدمن التي طلبتها -->
+        <div id="adminPanel" class="hidden p-4 bg-white shadow mb-4">
+            <button onclick="switchTab('usersManagerTab')" class="text-red-600 font-bold ml-4">إدارة المستخدمين</button>
+            <button onclick="switchTab('chartsTab')" class="text-orange-600 font-bold">تقارير بيانية</button>
         </div>
-    </div>
-
-    <header class="bg-primary/95 text-white p-4 flex justify-between items-center z-50">
-        <h1 class="text-lg font-bold">أمانة تنظيم القاهرة</h1>
-        <div id="userProfile" class="hidden flex items-center gap-4">
-            <span id="uNameTxt" class="font-bold"></span>
-            <button onclick="location.reload()" class="bg-white/20 p-2 rounded-full"><i class="fa-solid fa-power-off"></i></button>
-        </div>
-    </header>
-
-    <div class="flex flex-1 overflow-hidden">
-        <aside id="sidebar" class="w-64 glass-panel p-4 hidden">
-            <nav class="space-y-2">
-                <button onclick="switchTab('entryTab')" class="nav-btn w-full p-3 bg-primary text-white rounded-lg font-bold">إدخال البيانات</button>
-                <button onclick="switchTab('mirrorsTab')" class="nav-btn w-full p-3 hover:bg-white rounded-lg font-bold">مراجعة الشيتات</button>
-                <button onclick="switchTab('totalsTab')" class="nav-btn w-full p-3 hover:bg-white rounded-lg font-bold">الإجمالي النهائي</button>
-                
-                <!-- إضافة زرار الأدمن المخفية -->
-                <div id="adminPanel" class="hidden border-t mt-4 pt-4 border-gray-300">
-                    <button onclick="switchTab('usersManagerTab')" class="w-full p-3 text-red-600 font-bold">إدارة المستخدمين</button>
-                    <button onclick="switchTab('chartsTab')" class="w-full p-3 text-orange-600 font-bold">تقارير بيانية</button>
-                </div>
-            </nav>
-        </aside>
-
-        <main id="mainContent" class="flex-1 p-6 overflow-y-auto hidden">
-            <div id="entryTab" class="tab-content">/* محتواك الأصلي هنا */</div>
-            <div id="mirrorsTab" class="tab-content hidden">/* محتواك الأصلي هنا */</div>
-            <div id="totalsTab" class="tab-content hidden">/* محتواك الأصلي هنا */</div>
-            
-            <!-- تبويبات الأدمن الجديدة -->
-            <div id="usersManagerTab" class="tab-content hidden glass-panel p-6 rounded-xl">
-                <h2 class="text-xl font-bold mb-4">إدارة الصلاحيات</h2>
-                <div id="usersTable">سيتم عرض بيانات شيت Codes هنا</div>
-            </div>
-            <div id="chartsTab" class="tab-content hidden glass-panel p-6 rounded-xl">
-                <h2 class="text-xl font-bold mb-4">الرسوم البيانية</h2>
-                <canvas id="myChart" class="max-h-[400px]"></canvas>
-            </div>
-        </main>
     </div>
 
 <script>
-    // اللوجيك الخاص بك
-    const API_URL = "https://script.google.com/macros/s/AKfycbzh9mF2bXi3Gtr8Th0vUPMmHo90Vk7Npbp22oj_k13smc5jfHJWlECbgjOhq0YthrGz8Q/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbzh9mF2bXi3Gtr8Th0vUPMmHo90Vk7Npbp22oj_k13smc5jfHJWlECbgjOhq0YthrGz8Q/exec";
+
+    // دالة الفيتش المصححة (بدون no-cors)
+    async function fetchAPI(action, payload = {}) {
+        payload.action = action;
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            return await response.json();
+        } catch (e) {
+            console.error("Error:", e);
+            return { error: "خطأ في الاتصال" };
+        }
+    }
 
     async function login() {
-        const user = document.getElementById("username").value.trim();
-        const pass = document.getElementById("password").value.trim();
-        const result = await fetchAPI('checkLogin', { username: user, password: pass });
+        const u = document.getElementById("username").value;
+        const p = document.getElementById("password").value;
+        const res = await fetchAPI('checkLogin', { username: u, password: p });
         
-        if(result.success) {
-            document.getElementById("loginModal").style.display = "none";
-            document.getElementById("sidebar").classList.remove("hidden");
+        if(res.success) {
+            document.getElementById("app-loader").classList.add("hidden");
             document.getElementById("mainContent").classList.remove("hidden");
-            document.getElementById("userProfile").classList.remove("hidden");
-            document.getElementById("uNameTxt").innerText = user;
-
-            // كشف أزرار الأدمن
-            if(user === "Admin") {
+            // إذا كان أدمن
+            if(res.role === "admin") {
                 document.getElementById("adminPanel").classList.remove("hidden");
             }
         }
     }
 
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-        document.getElementById(tabId).classList.remove('hidden');
-        
-        // تفعيل الرسوم عند فتح التبويب
-        if(tabId === 'chartsTab') initCharts();
-    }
-
-    function initCharts() {
-        const ctx = document.getElementById('myChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['القسم 1', 'القسم 2', 'القسم 3'],
-                datasets: [{ label: 'عدد الأصوات', data: [12, 19, 3], backgroundColor: '#004aad' }]
-            }
-        });
-    }
-
-    async function fetchAPI(action, payload) { /* اللوجيك الأصلي الخاص بك */ }
+    // إخفاء الـ Loader بمجرد تحميل الصفحة
+    window.onload = () => document.getElementById('app-loader').style.display = 'none';
 </script>
 </body>
 </html>
