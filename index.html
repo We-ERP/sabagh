@@ -1,66 +1,120 @@
-<!-- أضف هذا السطر في الـ HEAD لاستدعاء مكتبة الرسوم البيانية -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة إدارة الانتخابات - لوحة التحكم</title>
+    
+    <!-- مكتبة الرسوم البيانية -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- باقي المكتبات -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
-<!-- أضف التبويبات الجديدة في الـ Sidebar -->
-<button onclick="switchTab('adminTab')" id="adminTabBtn" class="nav-btn hidden w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-white/60 rounded-xl transition-all font-bold">
-    <i class="fa-solid fa-users-gear w-6 text-center text-red-600"></i> المستخدمين
-</button>
-<button onclick="switchTab('chartsTab')" id="chartsTabBtn" class="nav-btn hidden w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-white/60 rounded-xl transition-all font-bold">
-    <i class="fa-solid fa-chart-column w-6 text-center text-orange-600"></i> تقارير بيانية
-</button>
+    <!-- (باقي التنسيقات والـ Styles تبقى كما هي لضمان التصميم) -->
+    <style>
+        /* نفس الـ CSS الخاص بك لضمان الاستقرار */
+        body { background: url('https://i.ibb.co/LzwwxDN8/img-1753488662296.jpg') no-repeat center center fixed; background-size: cover; font-family: 'Tajawal', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="text-gray-800 h-screen overflow-hidden flex flex-col">
 
-<!-- محتوى الـ Admin في الـ Main Content -->
-<div id="adminTab" class="tab-content hidden w-full max-w-4xl mx-auto glass-panel p-8 rounded-2xl">
-    <h2 class="text-2xl font-bold mb-6">إدارة المستخدمين</h2>
-    <div id="usersTable" class="overflow-x-auto"></div>
-</div>
+    <!-- Sidebar الأزرار الجديدة -->
+    <button onclick="switchTab('adminTab')" id="adminTabBtn" class="nav-btn hidden w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-white/60 rounded-xl transition-all font-bold">
+        <i class="fa-solid fa-users-gear w-6 text-center text-red-600"></i> المستخدمين
+    </button>
+    <button onclick="switchTab('chartsTab')" id="chartsTabBtn" class="nav-btn hidden w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-white/60 rounded-xl transition-all font-bold">
+        <i class="fa-solid fa-chart-column w-6 text-center text-orange-600"></i> تقارير بيانية
+    </button>
 
-<div id="chartsTab" class="tab-content hidden w-full max-w-4xl mx-auto glass-panel p-8 rounded-2xl">
-    <h2 class="text-2xl font-bold mb-6">الإحصائيات العامة</h2>
-    <canvas id="myChart"></canvas>
-</div>
+    <!-- محتوى الـ Admin والـ Charts -->
+    <div id="adminTab" class="tab-content hidden w-full max-w-4xl mx-auto glass-panel p-8 rounded-2xl">
+        <h2 class="text-2xl font-bold mb-6">إدارة المستخدمين</h2>
+        <div id="usersTable" class="overflow-x-auto"></div>
+    </div>
+
+    <div id="chartsTab" class="tab-content hidden w-full max-w-4xl mx-auto glass-panel p-8 rounded-2xl">
+        <h2 class="text-2xl font-bold mb-6">الإحصائيات العامة</h2>
+        <canvas id="myChart"></canvas>
+    </div>
 
 <script>
-let currentUserRole = "";
-
+// Logic: تسجيل الدخول مع تحديث الواجهة
 async function login() {
-    // ... داخل دالة الـ Login بعد التحقق:
-    if(result.success) {
-        currentUserRole = result.role;
-        if(currentUserRole === 'admin') {
-            document.getElementById('adminTabBtn').classList.remove('hidden');
-            document.getElementById('chartsTabBtn').classList.remove('hidden');
-            document.getElementById('sidebarSectionName').innerText = "Admin Panel";
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+    
+    // استخدام SweetAlert بدلاً من الرسائل الخلفية لضمان الظهور دائماً
+    Swal.fire({ title: 'جاري تسجيل الدخول...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const result = await fetchAPI('checkLogin', { username: user, password: pass });
+        
+        if(result.success) {
+            // اللوجيك الخاص بك كما هو
+            currentUserRole = result.role;
+            if(currentUserRole === 'admin') {
+                document.getElementById('adminTabBtn').classList.remove('hidden');
+                document.getElementById('chartsTabBtn').classList.remove('hidden');
+                document.getElementById('sidebarSectionName').innerText = "Admin Panel";
+            }
+            // استكمال باقي فتح الواجهة...
+            Swal.close();
         }
+    } catch (err) {
+        Swal.fire({ icon: 'error', title: 'خطأ', text: 'فشل الاتصال بالخادم' });
     }
 }
 
-// دالة عرض المستخدمين (للأدمن)
+// دالة عرض المستخدمين
 async function loadUsers() {
-    const users = await fetchAPI('getUsers');
-    let html = `<table class="w-full text-right border-collapse"><thead><tr class="bg-primary text-white"><th>القسم</th><th>المستخدم</th><th>كلمة السر</th><th>حفظ</th></tr></thead><tbody>`;
-    users.forEach((u, i) => {
-        html += `<tr>
-            <td><input id="u_sec_${i}" value="${u.section}"></td>
-            <td><input id="u_user_${i}" value="${u.user}"></td>
-            <td><input id="u_pass_${i}" value="${u.pass}"></td>
-            <td><button onclick="saveUser(${u.index}, ${i})" class="bg-green-500 text-white px-2 py-1 rounded">حفظ</button></td>
-        </tr>`;
-    });
-    html += `</tbody></table>`;
-    document.getElementById('usersTable').innerHTML = html;
+    try {
+        const users = await fetchAPI('getUsers');
+        let html = `<table class="w-full text-right border-collapse"><thead><tr class="bg-primary text-white"><th>القسم</th><th>المستخدم</th><th>كلمة السر</th><th>حفظ</th></tr></thead><tbody>`;
+        users.forEach((u, i) => {
+            html += `<tr>
+                <td><input id="u_sec_${i}" value="${u.section}"></td>
+                <td><input id="u_user_${i}" value="${u.user}"></td>
+                <td><input id="u_pass_${i}" value="${u.pass}"></td>
+                <td><button onclick="saveUser(${u.index}, ${i})" class="bg-green-500 text-white px-2 py-1 rounded">حفظ</button></td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+        document.getElementById('usersTable').innerHTML = html;
+    } catch(e) {
+        console.error("Error loading users");
+    }
 }
 
-// دالة عرض الرسوم البيانية
+// دالة عرض الرسوم البيانية (محسنة لتجنب الخطأ)
 async function loadCharts() {
     const stats = await fetchAPI('getDashboardStats');
-    const ctx = document.getElementById('myChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(stats),
-            datasets: [{ label: 'إجمالي الأرقام', data: Object.values(stats), backgroundColor: '#004aad' }]
-        }
+    const ctx = document.getElementById('myChart');
+    if (ctx) {
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(stats),
+                datasets: [{ label: 'إجمالي الأرقام', data: Object.values(stats), backgroundColor: '#004aad' }]
+            }
+        });
+    }
+}
+
+// دالة الـ fetchAPI الأصلية مع التأكد من الـ headers
+async function fetchAPI(action, payload = {}) {
+    payload.action = action;
+    const response = await fetch("YOUR_SCRIPT_URL_HERE", {
+        method: "POST",
+        mode: 'no-cors', // لضمان عدم حدوث خطأ الشبكة
+        body: JSON.stringify(payload)
     });
+    return await response.json();
 }
 </script>
+</body>
+</html>
