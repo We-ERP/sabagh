@@ -108,7 +108,7 @@ async function loadCharts() {
 // دالة الـ fetchAPI الأصلية مع التأكد من الـ headers
 async function fetchAPI(action, payload = {}) {
     payload.action = action;
-    const response = await fetch("YOUR_SCRIPT_URL_HERE", {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbzh9mF2bXi3Gtr8Th0vUPMmHo90Vk7Npbp22oj_k13smc5jfHJWlECbgjOhq0YthrGz8Q/exec", {
         method: "POST",
         mode: 'no-cors', // لضمان عدم حدوث خطأ الشبكة
         body: JSON.stringify(payload)
